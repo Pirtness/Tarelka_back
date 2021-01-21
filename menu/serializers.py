@@ -7,7 +7,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = ['name', 'amount', 'unit']
+        fields = '__all__'
 
 class DishSerializer(serializers.ModelSerializer):
     ingredients_list = IngredientSerializer(many=True)
