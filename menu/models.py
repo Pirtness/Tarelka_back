@@ -32,13 +32,19 @@ class Dish(models.Model):
 
     #picture by url?
 
+class WeekMenu(models.Model):
+    username = models.ForeignKey('auth.User', related_name='weekMenus', on_delete=models.CASCADE)
+    startDate = models.DateField(blank=True)
+    endDate = models.DateField(blank=True)
+
 class DayMenu(models.Model):
     day = models.DateField(blank=True)
     breakfast = models.ForeignKey('Dish', related_name='breakfasts', on_delete=models.CASCADE)
     lunch = models.ForeignKey('Dish', related_name='lunches', on_delete=models.CASCADE)
     dinner = models.ForeignKey('Dish', related_name='dinners', on_delete=models.CASCADE)
 
+    menu_id = models.ForeignKey('WeekMenu', related_name='dayMenus', on_delete=models.CASCADE)
+
+
     #def __str__(self):
     #    return self.day
-
-#class DishMenuMap()

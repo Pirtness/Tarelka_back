@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from menu.models import Ingredient, Dish, DayMenu
+from menu.models import Ingredient, Dish, DayMenu, WeekMenu
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 
@@ -9,8 +9,17 @@ class DayMenuSerializer(serializers.ModelSerializer):
     lunch = serializers.ReadOnlyField(source='lunch.id')
     dinner = serializers.ReadOnlyField(source='dinner.id')
 
+    menu_id = serializers.ReadOnlyField(source='menu_id.id')
+
     class Meta:
         model = DayMenu
+        fields = '__all__'
+
+class WeekMenuSerializer(serializers.ModelSerializer):
+    dayMenus = DayMenuSerializer(many=True)
+
+    class Meta:
+        model = WeekMenu
         fields = '__all__'
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -31,6 +40,7 @@ class DishSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
+    weekMenu = WeekMenuSerializer(many=True)
     password = serializers.CharField(write_only=True)
 
     def create(self, validated_data):
