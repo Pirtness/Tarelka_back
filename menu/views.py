@@ -26,37 +26,58 @@ class DayMenuList(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(day = datetime.datetime.now().date() + datetime.timedelta(days=1))
 
-class WeekMenuList(viewsets.ModelViewSet):
 
+
+class WeekMenuList(viewsets.ViewSet):
+
+    daysInWeek = 7
     #add permissions
 
-    serializer_class = WeekMenuSerializer
     queryset = WeekMenu.objects.all()
     #http_method_names = ['get']
 
-    @action(detail=False, methods=['POST'])
-    def createMenu(self, request):
+
+
+    def list(self, request):
+        weekMenus = WeekMenu.objects.filter(username=self.request.user,
+                         endDate__gt = datetime.datetime.now().date())
+
+
+        if len(weekMenus) == 1:
+            sDate = weekMenus[0].endDate + datetime.timedelta(days=1)
+            self.createMenu(self.request.user, sDate)
+        elif len(weekMenus) == 0:
+            sDate = datetime.datetime.now().date()
+            weekMenu = self.createMenu(self.request.user, sDate)
+            sDate = weekMenu.endDate + datetime.timedelta(days=1)
+            self.createMenu(self.request.user, sDate)
+        else:
+            serializer = WeekMenuSerializer(weekMenus, many=True)
+            return Response(serializer.data)
+
 
         weekMenus = WeekMenu.objects.filter(username=self.request.user,
-                    startDate = datetime.datetime.now().date())
-        if len(weekMenus) > 0:
-            return Response(WeekMenuSerializer(weekMenus, many=True).data)
+                         endDate__gt = datetime.datetime.now().date())
 
-        WeekMenu.objects.create(username=self.request.user,
-                startDate = datetime.datetime.now().date(),
-                endDate = datetime.datetime.now().date() + datetime.timedelta(days=2))
+        serializer = WeekMenuSerializer(weekMenus, many=True)
+        return Response(serializer.data)
 
-        weekMenu = WeekMenu.objects.filter(username=self.request.user,
-                    startDate = datetime.datetime.now().date())[0]
 
-        #weekMenu.save()
+
+    # @action(detail=False, methods=['POST'])
+    def createMenu(self, user, sDate):
+        WeekMenu.objects.create(username=user, startDate = sDate,
+                endDate = sDate + datetime.timedelta(days=self.daysInWeek))
+
+        weekMenu = WeekMenu.objects.filter(username=user, startDate = sDate,
+                endDate = sDate + datetime.timedelta(days=self.daysInWeek))[0]
 
         dish = Dish.objects.all()[0]
 
-        daysInWeek = 3
-        for i in range(daysInWeek):
+        for i in range(self.daysInWeek):
             dayMenu = DayMenu(menu_id = weekMenu,
-                    day = datetime.datetime.now().date() + datetime.timedelta(days = i),
+                    day = sDate + datetime.timedelta(days = i),
                     breakfast = dish, dinner = dish, lunch = dish)
             dayMenu.save()
-        return Response(WeekMenuSerializer(weekMenu).data)
+
+        return weekMenu
